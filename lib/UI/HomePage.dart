@@ -56,21 +56,22 @@ class _HomePageState extends State<HomePage> {
           Container(
             height: Get.height*0.5,
             width: Get.width,
-            child: BlocBuilder<NoteBookCubit, NoteBookState>(
-              builder: (context, state) {
-                if(state.noteBook.isNotEmpty)
+            child: BlocBuilder<NoteBookCubit, List<NoteBookModel>>(
+              builder: (context, notebooks) {
+                if(notebooks.isNotEmpty)
                 {
                    return ListView.builder(
-                    itemCount: state.noteBook.length,
+                    itemCount: notebooks.length,
                     itemBuilder: (context, index) {
+                       final notebook = notebooks[index];
                        return Padding(
                         padding: const EdgeInsets.all(30.0),
                         child: InkWell(
                           onTap: () {
-                            Get.to(() => Notes());
+                            Get.to(() => Notes(noteBookCubit: context.read<NoteBookCubit>(), notes: notebook.notes, noteBookIndex: index));
                           },
                           onLongPress:(){
-                            _showPopupMenu(context, state.noteBook[index]);
+                            _showPopupMenu(context, index);
                           },
                           child: Container(
                             height: 100,
@@ -79,10 +80,10 @@ class _HomePageState extends State<HomePage> {
                               borderRadius: BorderRadius.circular(20),
                               color: const Color.fromARGB(255, 240, 190, 207),
                             ),
-                            child: Center(child: Text(state.noteBook[index]),),
+                            child: Center(child: Text(notebook.title),),
                           ),
                         ),
-                  );
+                      );
                      }
                    );
                 }
@@ -153,13 +154,13 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void _showPopupMenu(BuildContext context,String note_book) async {
+  void _showPopupMenu(BuildContext context,int index) async {
     final result = await showMenu(
       context: context,
       position: RelativeRect.fromLTRB(0, 0, 0, 0),
       items: _dropdownItems.map((item) {
         return PopupMenuItem<String>(
-          value: item,
+          value: item, 
           child: Text(item),
         );
       }).toList(),
@@ -169,13 +170,13 @@ class _HomePageState extends State<HomePage> {
 
     if (result == "Delete") {
       BlocProvider.of<NoteBookCubit>(context)
-                          .deleteNoteBook(note_book);
-     Get.snackbar("NoteBook", "Notebook named \"$note_book\" is deleted" );
+                          .removeNotebookAt(index);
+     Get.snackbar("NoteBook", "Notebook  is deleted" );
     }
 
     else if (result == "Edit") {
-      _showUpdateNotebookBottomSheet(context,note_book);
-     Get.snackbar("NoteBook", "Notebook named \"$note_book\" is Updated" );
+      _showUpdateNotebookBottomSheet(context, index);
+     Get.snackbar("NoteBook", "Notebook is Updated" );
     }
 
     if (result != null) {
@@ -194,11 +195,11 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-    void _showUpdateNotebookBottomSheet(BuildContext context, String noteBook){
+    void _showUpdateNotebookBottomSheet(BuildContext context, int index){
     showModalBottomSheet(
       context: context,
       builder: (context) {
-        return UpdateNotebookBottomSheet(noteBook : noteBook);
+        return UpdateNotebookBottomSheet(index : index);
       },
     );
   }
@@ -244,7 +245,7 @@ class CreateNotebookBottomSheet extends StatelessWidget {
                       print("Notebook Name: $notebookName");
 
                       BlocProvider.of<NoteBookCubit>(context)
-                          .createNewNoteBook(notebookName);
+                          .addNoteBook(notebookName);
 
                       Navigator.pop(context); // Close the bottom sheet
                     }
@@ -262,10 +263,10 @@ class CreateNotebookBottomSheet extends StatelessWidget {
 
 
 class UpdateNotebookBottomSheet extends StatelessWidget {
-  String noteBook;
+  int index;
   final GlobalKey<FormBuilderState> _formKey = GlobalKey<FormBuilderState>();
 
-  UpdateNotebookBottomSheet({required this.noteBook});
+  UpdateNotebookBottomSheet({required this.index});
 
   @override
   Widget build(BuildContext context) {
@@ -304,7 +305,7 @@ class UpdateNotebookBottomSheet extends StatelessWidget {
                       print("Notebook Name: $newNoteBookName");
 
                       BlocProvider.of<NoteBookCubit>(context)
-                          .editNoteBook(noteBook,newNoteBookName);
+                          .updateNotebookAt(index,newNoteBookName);
 
                       Navigator.pop(context); // Close the bottom sheet
                     }

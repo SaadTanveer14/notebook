@@ -40,7 +40,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
 
     return BlocProvider<NoteBookCubit>(
-      create: (context) => NoteBookCubit(),
+      create: (context) => NoteBookCubit("Notebooks"),
       child: GetMaterialApp(home: const HomePage()),
     );
   }
